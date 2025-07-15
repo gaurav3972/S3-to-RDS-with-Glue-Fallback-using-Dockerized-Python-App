@@ -1,8 +1,4 @@
-# 📋 Project: S3 to RDS with Glue Fallback using Dockerized Python App
-
-## 🔗 Title
-
-**Automated Data Ingestion from Amazon S3 to RDS with AWS Glue Fallback using Dockerized Python**
+# Automated Data Ingestion from Amazon S3 to RDS with AWS Glue Fallback using Dockerized Python
 
 ---
 
