@@ -225,7 +225,7 @@ SELECT * FROM customer_data;
   * `❌ RDS failed: ...`
   * `✅ Glue table created` (or `⚠️ Glue table already exists`)
 * **Verify via:** AWS Glue Console → Databases → Tables
-
+![](https://github.com/gaurav3972/S3-to-RDS-with-Glue-Fallback-using-Dockerized-Python-App/blob/main/images/Screenshot%202025-07-14%20161236.png)
 ---
 
 # 📌 **Environment Variables Summary**
