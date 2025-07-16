@@ -201,7 +201,7 @@ docker run --rm \
 -e GLUE_S3_LOCATION=s3://data-pipeline-gaurav/glue-data/ \
 s3-to-rds-glue-app
 ```
-
+![](https://github.com/gaurav3972/S3-to-RDS-with-Glue-Fallback-using-Dockerized-Python-App/blob/main/images/Screenshot%202025-07-14%20161112.png)
 ---
 
 # ✅ **PHASE 4: Validation**
@@ -219,7 +219,7 @@ SELECT * FROM customer_data;
 ---
 
 ### ❌ Case 2: RDS Upload Fails → Fallback to Glue
-
+![](https://github.com/gaurav3972/S3-to-RDS-with-Glue-Fallback-using-Dockerized-Python-App/blob/main/images/Screenshot%202025-07-14%20162258.png)
 * **Log Output:**
 
   * `❌ RDS failed: ...`
