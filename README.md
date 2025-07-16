@@ -8,7 +8,7 @@ This project demonstrates a **fault-tolerant, Dockerized data ingestion pipeline
 * Loads the data into **Amazon RDS (MySQL-compatible)**
 * Falls back to **AWS Glue Data Catalog** if RDS upload fails
 * Runs as a **containerized Python application on EC2 (Amazon Linux 2023)**
-
+![](https://github.com/gaurav3972/S3-to-RDS-with-Glue-Fallback-using-Dockerized-Python-App/blob/main/images/0.0.0.png)
 ---
 
 ## 🚀 **Technologies Used**
@@ -247,26 +247,5 @@ SELECT * FROM customer_data;
 | `GLUE_S3_LOCATION`      | S3 path used by Glue catalog      |
 
 ---
-
-## 📌 **Tips & Notes**
-
-* ✅ Ensure **IAM permissions** for accessing S3, RDS, and Glue.
-* ✅ EC2 must be in the same **VPC/subnet** as RDS if RDS is not public.
-* ✅ S3 file must be **CSV with valid headers** matching Glue column config.
-
----
-
-## ✅ **Summary**
-
-This project showcases a **robust and automated data pipeline** that:
-
-* Pulls data from **Amazon S3**
-* Inserts into **Amazon RDS (MySQL)**
-* Fallbacks to **AWS Glue Data Catalog** in case of failure
-* Is **containerized via Docker** and deployable on **EC2**
-
-Ideal for real-world ETL and fault-tolerant ingestion workflows!
-
----
-
-Let me know if you'd like to generate a PDF version or integrate this with Terraform for infrastructure automation.
+## **📕Summary :**
+This project focuses on building a Dockerized Python application that automates the ingestion of data from an Amazon S3 bucket into an Amazon RDS (MySQL-compatible) database, with a built-in fallback mechanism to AWS Glue. The application starts by reading a CSV file from S3, processes it using `pandas`, and attempts to upload the data into an RDS table using `SQLAlchemy` and `PyMySQL`. If the RDS insertion fails—due to connectivity issues or service unavailability—the application automatically falls back to AWS Glue by creating a new table in the Glue Data Catalog and registering the data's S3 location for downstream access, such as querying via Amazon Athena. The entire solution is packaged in a Docker container, ensuring consistent behavior across different environments. This project demonstrates efficient integration of AWS services with fault tolerance and cloud-native deployment practices using Docker.
