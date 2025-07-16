@@ -35,7 +35,7 @@ This project demonstrates a **fault-tolerant, Dockerized data ingestion pipeline
 * **Key Pair:** Download and save `.pem` file
 
 ---
-
+![](https://github.com/gaurav3972/S3-to-RDS-with-Glue-Fallback-using-Dockerized-Python-App/blob/main/images/Screenshot%202025-07-14%20161136.png)
 ### 1.2 Connect to EC2
 
 ```bash
