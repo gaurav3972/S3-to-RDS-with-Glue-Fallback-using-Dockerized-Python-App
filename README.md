@@ -1,152 +1,153 @@
-# 📦 **Automated Data Ingestion from Amazon S3 to RDS with AWS Glue Fallback (Dockerized Python App)**
----
-## 📖 **Objective**
 
-This project demonstrates a **fault-tolerant, Dockerized data ingestion pipeline** using AWS services. The application:
+# 📘 Automated Data Ingestion from Amazon S3 to RDS with AWS Glue Fallback (Dockerized Python App)
 
-* Ingests a CSV file from **Amazon S3**
-* Loads the data into **Amazon RDS (MySQL-compatible)**
-* Falls back to **AWS Glue Data Catalog** if RDS upload fails
-* Runs as a **containerized Python application on EC2 (Amazon Linux 2023)**
-![](https://github.com/gaurav3972/S3-to-RDS-with-Glue-Fallback-using-Dockerized-Python-App/blob/main/images/0.0.0.png)
----
+## 🎯 Objective
 
-## 🚀 **Technologies Used**
+This project demonstrates how to build a fault-tolerant, automated data ingestion pipeline using:
 
-| Category             | Technologies                               |
-| -------------------- | ------------------------------------------ |
-| **Cloud Services**   | AWS S3, RDS (MySQL), Glue, EC2             |
-| **Language**         | Python 3.9                                 |
-| **Libraries**        | `pandas`, `boto3`, `sqlalchemy`, `pymysql` |
-| **Containerization** | Docker                                     |
+- ✅ **Amazon S3** for data storage
+- ✅ **Amazon RDS (MySQL)** as the primary database
+- ✅ **AWS Glue** as a fallback mechanism if RDS insertion fails
+- ✅ **Dockerized Python Application** for portability and consistent execution
 
 ---
 
-# ✅ **PHASE 1: EC2 Instance Setup**
+## 🧰 Technologies Used
 
-### 1.1 Launch EC2
-
-* **AMI:** Amazon Linux 2023
-* **Instance Type:** `t2.micro` (Free Tier)
-* **Security Group:** Allow inbound traffic on ports:
-
-  * `22` (SSH)
-  * `3306` (MySQL)
-* **Key Pair:** Download and save `.pem` file
+- **AWS S3** – Stores source CSV file  
+- **AWS RDS (MySQL)** – Primary destination for data  
+- **AWS Glue** – Backup if data cannot be inserted into RDS  
+- **IAM** – Access control  
+- **EC2** – Environment to run the Docker container  
+- **Docker** – Containerization for consistent deployment  
+- **Python Libraries** – `boto3`, `pandas`, `sqlalchemy`, `pymysql`
 
 ---
-![](https://github.com/gaurav3972/S3-to-RDS-with-Glue-Fallback-using-Dockerized-Python-App/blob/main/images/Screenshot%202025-07-14%20161136.png)
-### 1.2 Connect to EC2
 
+## 🛠️ Step-by-Step Implementation
+
+### 🔹 Step 1: Launch EC2 Instance
+1. Launch **Amazon Linux 2**.
+2. Open these ports in the Security Group:
+   - SSH (22)
+   - HTTP (80) – optional
+   - MySQL/Aurora (3306)
+3. Install Docker:
 ```bash
-ssh -i your-key.pem ec2-user@<public-ip>
-```
-
----
-
-### 1.3 Install Docker
-
-```bash
-sudo dnf update -y
-sudo dnf install docker -y
-sudo systemctl enable docker
-sudo systemctl start docker
+sudo yum update -y
+sudo yum install docker -y
+sudo service docker start
 sudo usermod -aG docker ec2-user
-exit  # Reconnect after adding docker group
-```
+````
 
-Reconnect:
+---
 
-```bash
-ssh -i your-key.pem ec2-user@<public-ip>
+### 🔹 Step 2: Setup IAM User
+
+1. Go to IAM → Users → Create user
+2. Username: `s3-rds-glue-user`
+3. Enable **Programmatic Access**
+4. Attach the following policies:
+
+   * `AmazonS3FullAccess`
+   * `AmazonRDSFullAccess`
+   * `AWSGlueConsoleFullAccess`
+5. Save the Access Key ID and Secret Access Key
+
+---
+
+### 🔹 Step 3: Create RDS (MySQL) Database
+
+1. Go to RDS → Create Database
+2. Config:
+
+   * Engine: MySQL
+   * DB Identifier: `rds-mysql`
+   * DB Name: `mydb`
+   * Username: `admin`
+   * Password: `yourpassword`
+   * Public access: Yes
+   * Port: 3306
+3. Add EC2 Security Group to the RDS inbound rules
+
+#### ✅ Create Table:
+
+```sql
+CREATE DATABASE mydb;
+USE mydb;
+CREATE TABLE students (id INT, name VARCHAR(50));
 ```
 
 ---
 
-### 1.4 Verify Docker Installation
+### 🔹 Step 4: Upload CSV File to S3
 
-```bash
-docker version
+1. Create a bucket (e.g., `my-data-bucket`)
+2. Upload `data.csv`:
+
+```csv
+id,name
+1,gaurav
+2,patil
+3,git
+4,hub
+5,project
 ```
 
 ---
 
-# ✅ **PHASE 2: Application Setup**
+### 🔹 Step 5: Python Script - `main.py`
 
-### 2.1 Create Project Structure
+A Python script that:
 
-```bash
-mkdir s3-to-rds-glue && cd s3-to-rds-glue
-touch ingest.py requirements.txt Dockerfile
-```
-
----
-
-### 2.2 Python Script – `ingest.py`
+* Reads a CSV file from S3
+* Inserts data into RDS
+* Falls back to Glue if RDS insert fails
 
 ```python
-import os
+# main.py
 import boto3
 import pandas as pd
-from sqlalchemy import create_engine
+import os
 import pymysql
+from sqlalchemy import create_engine
 
 def read_csv_from_s3():
-    s3 = boto3.client('s3')
-    response = s3.get_object(Bucket=os.environ['S3_BUCKET'], Key=os.environ['S3_KEY'])
-    return pd.read_csv(response['Body'])
+    ...
 
 def upload_to_rds(df):
-    try:
-        engine = create_engine(
-            f"mysql+pymysql://{os.environ['RDS_USER']}:{os.environ['RDS_PASS']}@{os.environ['RDS_HOST']}/{os.environ['RDS_DB']}"
-        )
-        df.to_sql(os.environ['RDS_TABLE'], engine, index=False, if_exists='replace')
-        print("✅ Uploaded to RDS")
-        return True
-    except Exception as e:
-        print("❌ RDS failed:", e)
-        return False
+    ...
 
 def fallback_to_glue():
-    glue = boto3.client('glue')
-    try:
-        glue.create_database(DatabaseInput={'Name': os.environ['GLUE_DB']})
-    except glue.exceptions.AlreadyExistsException:
-        pass
-    try:
-        glue.create_table(
-            DatabaseName=os.environ['GLUE_DB'],
-            TableInput={
-                'Name': os.environ['GLUE_TABLE'],
-                'StorageDescriptor': {
-                    'Columns': [{'Name': 'col1', 'Type': 'string'}, {'Name': 'col2', 'Type': 'string'}],
-                    'Location': os.environ['GLUE_S3_LOCATION'],
-                    'InputFormat': 'org.apache.hadoop.mapred.TextInputFormat',
-                    'OutputFormat': 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat',
-                    'SerdeInfo': {
-                        'SerializationLibrary': 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe',
-                        'Parameters': {'field.delim': ','}
-                    }
-                },
-                'TableType': 'EXTERNAL_TABLE'
-            }
-        )
-        print("✅ Glue table created")
-    except glue.exceptions.AlreadyExistsException:
-        print("⚠️ Glue table already exists")
+    ...
 
 if __name__ == "__main__":
     df = read_csv_from_s3()
-    if not upload_to_rds(df):
+    success = upload_to_rds(df)
+    if not success:
         fallback_to_glue()
+```
+
+> Full script is included in this repo under `main.py`.
+
+---
+
+### 🔹 Step 6: Dockerfile
+
+```dockerfile
+FROM python:3.9
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY main.py .
+CMD ["python", "main.py"]
 ```
 
 ---
 
-### 2.3 Python Dependencies – `requirements.txt`
+### 🔹 Step 7: `requirements.txt`
 
-```
+```text
 boto3
 pandas
 sqlalchemy
@@ -155,97 +156,78 @@ pymysql
 
 ---
 
-### 2.4 Dockerfile
+### 🔹 Step 8: `.env` File
 
-```Dockerfile
-FROM python:3.9-slim
+```env
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_DEFAULT_REGION=ap-south-1
 
-WORKDIR /app
+S3_BUCKET=kishor-data-ingest
+CSV_KEY=data.csv
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RDS_HOST=rds-endpoint.rds.amazonaws.com
+RDS_PORT=3306
+RDS_USER=admin
+RDS_PASSWORD=yourpassword
+RDS_DB=mydb
+RDS_TABLE=students
 
-COPY ingest.py .
-
-CMD ["python", "ingest.py"]
+GLUE_DATABASE=glue_fallback_db
+GLUE_TABLE=students_glue
+GLUE_S3_LOCATION=s3://kishor-data-ingest/
 ```
 
 ---
 
-# ✅ **PHASE 3: Build & Run**
-
-### 3.1 Build Docker Image
+### 🔹 Step 9: Build Docker Image
 
 ```bash
-docker build -t s3-to-rds-glue-app .
+docker build -t s3-rds-glue-app .
 ```
 
 ---
 
-### 3.2 Run Docker Container with Environment Variables
+### 🔹 Step 10: Run the App
 
 ```bash
-docker run --rm \
--e AWS_ACCESS_KEY_ID=your-access-key \
--e AWS_SECRET_ACCESS_KEY=your-secret-key \
--e AWS_REGION=us-east-1 \
--e S3_BUCKET=data-pipeline-gaurav \
--e S3_KEY=sample.csv \
--e RDS_HOST=mydb.rds.amazonaws.com \
--e RDS_USER=admin \
--e RDS_PASS=yourpassword \
--e RDS_DB=mydatabase \
--e RDS_TABLE=customer_data \
--e GLUE_DB=fallbackdb \
--e GLUE_TABLE=gaurav_table \
--e GLUE_S3_LOCATION=s3://data-pipeline-gaurav/glue-data/ \
-s3-to-rds-glue-app
-```
-![](https://github.com/gaurav3972/S3-to-RDS-with-Glue-Fallback-using-Dockerized-Python-App/blob/main/images/Screenshot%202025-07-14%20161112.png)
----
-
-# ✅ **PHASE 4: Validation**
-
-### ✔️ Case 1: RDS Upload Succeeds
-
-* **Log Output:** ![](https://github.com/gaurav3972/S3-to-RDS-with-Glue-Fallback-using-Dockerized-Python-App/blob/main/images/Screenshot%202025-07-14%20161219.png)
-* **Verify:**
-
-```sql
-USE mydatabase;
-SELECT * FROM customer_data;
+docker run --env-file .env s3-rds-glue-app
 ```
 
 ---
 
-### ❌ Case 2: RDS Upload Fails → Fallback to Glue
-![](https://github.com/gaurav3972/S3-to-RDS-with-Glue-Fallback-using-Dockerized-Python-App/blob/main/images/Screenshot%202025-07-14%20162258.png)
-* **Log Output:**
+## 🔍 Output Scenarios
 
-  * `❌ RDS failed: ...`
-  * `✅ Glue table created` (or `⚠️ Glue table already exists`)
-* **Verify via:** AWS Glue Console → Databases → Tables
-![](https://github.com/gaurav3972/S3-to-RDS-with-Glue-Fallback-using-Dockerized-Python-App/blob/main/images/Screenshot%202025-07-14%20161236.png)
----
+### ✅ Success:
 
-# 📌 **Environment Variables Summary**
+```
+📥 Reading CSV from S3...
+✅ CSV loaded  
+📤 Trying to upload data to RDS...
+✅ Data uploaded to RDS
+```
 
-| Variable                | Purpose                           |
-| ----------------------- | --------------------------------- |
-| `AWS_ACCESS_KEY_ID`     | AWS access key                    |
-| `AWS_SECRET_ACCESS_KEY` | AWS secret key                    |
-| `AWS_REGION`            | AWS region (e.g., `us-east-1`)    |
-| `S3_BUCKET`             | Name of source S3 bucket          |
-| `S3_KEY`                | CSV file key (path in bucket)     |
-| `RDS_HOST`              | RDS endpoint (without `https://`) |
-| `RDS_USER`              | RDS database user                 |
-| `RDS_PASS`              | RDS password                      |
-| `RDS_DB`                | RDS database name                 |
-| `RDS_TABLE`             | Table name to write into          |
-| `GLUE_DB`               | Glue database name                |
-| `GLUE_TABLE`            | Glue table name                   |
-| `GLUE_S3_LOCATION`      | S3 path used by Glue catalog      |
+### 🔁 Fallback to Glue:
+
+```
+📥 Reading CSV from S3...
+✅ CSV loaded  
+📤 Trying to upload data to RDS...
+❌ Upload to RDS failed: ...
+🔁 Fallback to Glue triggered...
+✅ Glue table created
+```
 
 ---
-## **📕Summary :**
-This project focuses on building a Dockerized Python application that automates the ingestion of data from an Amazon S3 bucket into an Amazon RDS (MySQL-compatible) database, with a built-in fallback mechanism to AWS Glue. The application starts by reading a CSV file from S3, processes it using `pandas`, and attempts to upload the data into an RDS table using `SQLAlchemy` and `PyMySQL`. If the RDS insertion fails—due to connectivity issues or service unavailability—the application automatically falls back to AWS Glue by creating a new table in the Glue Data Catalog and registering the data's S3 location for downstream access, such as querying via Amazon Athena. The entire solution is packaged in a Docker container, ensuring consistent behavior across different environments. This project demonstrates efficient integration of AWS services with fault tolerance and cloud-native deployment practices using Docker.
+
+## 📝 Project Summary
+
+This project builds a **resilient and automated data pipeline** that:
+
+* Pulls data from S3
+* Pushes it to RDS (MySQL)
+* Falls back to Glue on failure
+* Is packaged as a Docker container for portability
+
+---
+
