@@ -1,6 +1,6 @@
 
 # 📘 Automated Data Ingestion from Amazon S3 to RDS with AWS Glue Fallback (Dockerized Python App)
-
+![](https://github.com/gaurav3972/S3-to-RDS-with-Glue-Fallback-using-Dockerized-Python-App/blob/main/images/0.0.0.png)
 ## 🎯 Objective
 
 This project demonstrates how to build a fault-tolerant, automated data ingestion pipeline using:
